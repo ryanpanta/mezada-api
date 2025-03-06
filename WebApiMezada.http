@@ -1,0 +1,6 @@
+@WebApiMezada_HostAddress = http://localhost:5003
+
+GET {{WebApiMezada_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
