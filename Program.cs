@@ -1,5 +1,6 @@
 using WebApiMezada.Configurations;
 using WebApiMezada.Services.User;
+using WebApiMezada.Services.User.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.Configure<UserDatabaseSettings>(options =>
     options.UserCollectionName = userSettings.UserCollectionName;
 });
 
+builder.Services.AddSingleton<UserRegisterValidator>();
+
 builder.Services.AddSingleton<UserService>();
 
 builder.Services.AddCors(options =>
@@ -34,12 +37,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -47,7 +47,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseHttpsRedirection(); // Só usa HTTPS fora de desenvolvimento
+    app.UseHttpsRedirection(); 
 }
 
 app.UseAuthorization();

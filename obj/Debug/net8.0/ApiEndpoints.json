@@ -21,15 +21,31 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.UserController",
-    "Method": "Create",
-    "RelativePath": "api/Users",
+    "Method": "Login",
+    "RelativePath": "api/Users/login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "user",
-        "Type": "WebApiMezada.Models.UserModel",
+        "Name": "userDTO",
+        "Type": "WebApiMezada.DTOs.User.UserLoginDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.UserController",
+    "Method": "Register",
+    "RelativePath": "api/Users/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userDTO",
+        "Type": "WebApiMezada.DTOs.User.UserRegisterDTO",
         "IsRequired": true
       }
     ],

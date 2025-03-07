@@ -40,3 +40,6 @@ D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\refint\WebApiMezada.dl
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\WebApiMezada.pdb
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\WebApiMezada.genruntimeconfig.cache
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\ref\WebApiMezada.dll
+D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\WebApiMezada.sourcelink.json
+D:\TCC\projeto\WebApiMezada\WebApiMezada\bin\Debug\net8.0\BCrypt.Net-Next.dll
+D:\TCC\projeto\WebApiMezada\WebApiMezada\bin\Debug\net8.0\FluentValidation.dll

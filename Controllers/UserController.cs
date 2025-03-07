@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
+using WebApiMezada.DTOs.User;
 using WebApiMezada.Models;
 using WebApiMezada.Services.User;
 
@@ -22,10 +24,33 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Create(UserModel user)
+        [Route("register")]
+        public async Task<ActionResult> Register([FromBody] UserRegisterDTO userDTO)
         {
-            await _userService.Create(user);
-            return NoContent();
+            try
+            {
+                var user = await _userService.Register(userDTO);
+                return Ok(new { UserId = user.Id, Message = "Usuário cadastrado com sucesso" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] UserLoginDTO userDTO)
+        {
+            try
+            {
+                var user = await _userService.Login(userDTO);
+                return Ok(new { UserId = user.Id, Message = "Login bem-sucedido" });
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { Message = ex.Message });
+            }
         }
     }
 }
