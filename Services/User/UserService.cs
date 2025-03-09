@@ -26,9 +26,14 @@ namespace WebApiMezada.Services.User
             return await _userCollection.Find(user => true).ToListAsync();
         }
 
-        public async Task<UserModel> Get(string id)
+        public async Task<UserModel> GetUserById(string id)
         {
-            return await _userCollection.Find(user => user.Id == id).FirstOrDefaultAsync();
+            var user = await _userCollection.Find(user => user.Id == id).FirstOrDefaultAsync();
+            if (user is null)
+            {
+                throw new Exception("Usuário não encontrado.");
+            }
+            return user;
         }
 
 

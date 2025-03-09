@@ -37,6 +37,16 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.UserController",
+    "Method": "GetCurrentUser",
+    "RelativePath": "api/Users/me",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.UserController",
     "Method": "Register",
     "RelativePath": "api/Users/register",
     "HttpMethod": "POST",

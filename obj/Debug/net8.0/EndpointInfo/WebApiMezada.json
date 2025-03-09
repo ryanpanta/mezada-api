@@ -104,6 +104,18 @@
           }
         }
       }
+    },
+    "/api/Users/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {

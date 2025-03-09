@@ -52,5 +52,32 @@ namespace WebApiMezada.Controllers
                 return Unauthorized(new { Message = ex.Message });
             }
         }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var user = await _userService.GetUserById(userId);
+                if (user == null)
+                    return NotFound(new { Message = "Usuário não encontrado." });
+
+                return Ok(new
+                {
+                    UserId = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Role = user.Role
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
