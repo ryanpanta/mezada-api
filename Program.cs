@@ -23,6 +23,15 @@ builder.Services.Configure<UserDatabaseSettings>(options =>
     options.UserCollectionName = userSettings.UserCollectionName;
 });
 
+builder.Services.Configure<FamilyGroupDatabaseSettings>(options =>
+{
+    var dbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+    var userSettings = builder.Configuration.GetSection("Collections:FamilyGroups").Get<FamilyGroupDatabaseSettings>();
+    options.ConnectionString = dbSettings.ConnectionString;
+    options.DatabaseName = dbSettings.DatabaseName;
+    options.FamilyGroupCollectionName = userSettings.FamilyGroupCollectionName;
+});
+
 builder.Services.AddSingleton<UserRegisterValidator>();
 
 builder.Services.AddSingleton<UserService>();

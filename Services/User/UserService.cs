@@ -15,15 +15,21 @@ namespace WebApiMezada.Services.User
 
         public UserService(IOptions<UserDatabaseSettings> userSettings, UserRegisterValidator validator)
         {
-            var client = new MongoClient("mongodb://localhost:27017");
-            var database = client.GetDatabase("Mezada");
-            _userCollection = database.GetCollection<UserModel>("Users");
+            var client = new MongoClient(userSettings.Value.ConnectionString);
+            var database = client.GetDatabase(userSettings.Value.DatabaseName);
+            _userCollection = database.GetCollection<UserModel>(userSettings.Value.UserCollectionName);
             _validator = validator;
         }
 
         public async Task<List<UserModel>> GetAll()
         {
             return await _userCollection.Find(user => true).ToListAsync();
+        }
+
+        public async Task<UserModel> Update(UserModel user)
+        {
+            await _userCollection.ReplaceOneAsync(u => u.Id == user.Id, user);
+            return user;
         }
 
         public async Task<UserModel> GetUserById(string id)
