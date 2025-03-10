@@ -83,5 +83,12 @@ namespace WebApiMezada.Services.User
             return user; 
         }
 
+        public async Task SetParent(string userId)
+        {
+            var user = await GetUserById(userId);
+            user.SetParent();
+            await Update(user);
+        }
+
     }
 }

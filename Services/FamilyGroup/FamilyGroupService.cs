@@ -4,6 +4,7 @@ using System.Reflection.Metadata.Ecma335;
 using WebApiMezada.Configurations;
 using WebApiMezada.DTOs.FamilyGroup;
 using WebApiMezada.Models;
+using WebApiMezada.Models.Enums;
 using WebApiMezada.Services.User;
 using WebApiMezada.Services.User.Validators;
 
@@ -37,14 +38,26 @@ namespace WebApiMezada.Services.FamilyGroup
             return familyGroup;
         }
 
-        public async Task<FamilyGroupModel> Create(FamilyGroupCreateDTO familyGroupDTO)
+        public async Task<FamilyGroupModel> Create(FamilyGroupCreateDTO familyGroupDTO, string userId)
         {
+            var user = await _userService.GetUserById(userId);
+            if (user is null)
+            {
+                throw new Exception("Usuário não encontrado.");
+            }
+
             var family = new FamilyGroupModel
             {
                 Name = familyGroupDTO.Name,
-                HashCode = GenerateHashCode()
+                HashCode = GenerateHashCode(),
+                Users = new List<string> { userId }
             };
             await _familyGroupCollection.InsertOneAsync(family);
+
+            user.Role = EnumRoles.Parent;
+            user.FamilyGroupId = family.Id;
+            await _userService.Update(user);
+
             return family;
         }
 

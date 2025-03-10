@@ -1,4 +1,5 @@
 using WebApiMezada.Configurations;
+using WebApiMezada.Services.FamilyGroup;
 using WebApiMezada.Services.User;
 using WebApiMezada.Services.User.Validators;
 
@@ -34,7 +35,10 @@ builder.Services.Configure<FamilyGroupDatabaseSettings>(options =>
 
 builder.Services.AddSingleton<UserRegisterValidator>();
 
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IFamilyGroupService, FamilyGroupService>();
+
 
 builder.Services.AddCors(options =>
 {

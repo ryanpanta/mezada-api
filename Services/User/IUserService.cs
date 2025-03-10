@@ -10,5 +10,6 @@ namespace WebApiMezada.Services.User
         Task<UserModel> GetUserById(string id);
         Task<List<UserModel>> GetAll();
         Task<UserModel> Update(UserModel user);
+        Task SetParent(string userId);
     }
 }

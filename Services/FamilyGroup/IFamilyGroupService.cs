@@ -1,6 +1,14 @@
-﻿namespace WebApiMezada.Services.FamilyGroup
+﻿using WebApiMezada.DTOs.FamilyGroup;
+using WebApiMezada.Models;
+
+namespace WebApiMezada.Services.FamilyGroup
 {
-    public class IFamilyGroupService
+    public interface IFamilyGroupService
     {
+        Task Join(string hashCode, string userId);
+        Task<FamilyGroupModel> Create(FamilyGroupCreateDTO familyGroupDTO, string userId);
+        Task<FamilyGroupModel> GetFamilyGroupById(string id);
+        Task<List<FamilyGroupModel>> GetAll();
+        
     }
 }

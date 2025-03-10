@@ -1,5 +1,57 @@
 [
   {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "GetAll",
+    "RelativePath": "api/FamilyGroups",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[WebApiMezada.Models.FamilyGroupModel, WebApiMezada, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "Create",
+    "RelativePath": "api/FamilyGroups/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "familyGroupDTO",
+        "Type": "WebApiMezada.DTOs.FamilyGroup.FamilyGroupCreateDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "Join",
+    "RelativePath": "api/FamilyGroups/join",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "hashCode",
+        "Type": "WebApiMezada.DTOs.FamilyGroup.FamilyGroupJoinDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "WebApiMezada.Controllers.UserController",
     "Method": "GetAll",
     "RelativePath": "api/Users",

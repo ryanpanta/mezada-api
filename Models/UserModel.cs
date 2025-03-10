@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Reflection.Metadata.Ecma335;
 using WebApiMezada.Models.Enums;
 
 namespace WebApiMezada.Models
@@ -15,6 +16,11 @@ namespace WebApiMezada.Models
         public EnumRoles Role { get; set; } = EnumRoles.Child;
         public bool Active { get; set; } = true;
         public string FamilyGroupId { get; set; } = string.Empty;
+
+        public void SetParent()
+        {
+            Role = EnumRoles.Parent;
+        }
 
     }
 }

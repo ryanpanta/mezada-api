@@ -1,7 +1,7 @@
 ﻿namespace WebApiMezada.DTOs.FamilyGroup
 {
-    public class FamilyGroupCreateDTO
+    public class FamilyGroupJoinDTO
     {
-        public string Name { get; set; } = string.Empty;
+        public string HashCode { get; set; } = string.Empty;
     }
 }
