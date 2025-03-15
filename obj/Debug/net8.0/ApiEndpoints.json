@@ -21,6 +21,32 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "GetFamilyGroupById",
+    "RelativePath": "api/FamilyGroups/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebApiMezada.Models.FamilyGroupModel",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
     "Method": "Create",
     "RelativePath": "api/FamilyGroups/create",
     "HttpMethod": "POST",

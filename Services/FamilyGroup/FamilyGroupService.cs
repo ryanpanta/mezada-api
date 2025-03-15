@@ -28,6 +28,7 @@ namespace WebApiMezada.Services.FamilyGroup
             return await _familyGroupCollection.Find(familyGroup => true).ToListAsync();
         }
 
+
         public async Task<FamilyGroupModel> GetFamilyGroupById(string id)
         {
             var familyGroup = await _familyGroupCollection.Find(familyGroup => familyGroup.Id == id).FirstOrDefaultAsync();

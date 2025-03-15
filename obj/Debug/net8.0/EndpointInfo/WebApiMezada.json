@@ -43,6 +43,45 @@
         }
       }
     },
+    "/api/FamilyGroups/{id}": {
+      "get": {
+        "tags": [
+          "FamilyGroup"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/FamilyGroups/create": {
       "post": {
         "tags": [

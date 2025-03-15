@@ -18,7 +18,7 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpGet]
-        [RequireAuthentication]
+        //[RequireAuthentication]
         public async Task<ActionResult<List<UserModel>>> GetAll()
         {
             var response = await _userService.GetAll();
@@ -56,7 +56,7 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpGet("me")]
-        [RequireAuthentication]
+        //[RequireAuthentication]
         public async Task<IActionResult> GetCurrentUser()
         {
             try

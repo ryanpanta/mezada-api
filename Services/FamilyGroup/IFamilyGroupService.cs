@@ -9,6 +9,6 @@ namespace WebApiMezada.Services.FamilyGroup
         Task<FamilyGroupModel> Create(FamilyGroupCreateDTO familyGroupDTO, string userId);
         Task<FamilyGroupModel> GetFamilyGroupById(string id);
         Task<List<FamilyGroupModel>> GetAll();
-        
+
     }
 }

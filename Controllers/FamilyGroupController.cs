@@ -26,6 +26,21 @@ namespace WebApiMezada.Controllers
             return Ok(response);
         }
 
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<ActionResult<FamilyGroupModel>> GetFamilyGroupById([FromRoute] string id)
+        {
+            try { 
+                var response = await _familyGroupService.GetFamilyGroupById(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Route("create")]
         public async Task<ActionResult> Create([FromBody] FamilyGroupCreateDTO familyGroupDTO)
