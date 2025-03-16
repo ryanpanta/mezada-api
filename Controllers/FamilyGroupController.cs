@@ -19,13 +19,6 @@ namespace WebApiMezada.Controllers
             _familyGroupService = familyGroupService;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<FamilyGroupModel>>> GetAll()
-        {
-            var response = await _familyGroupService.GetAll();
-            return Ok(response);
-        }
-
 
         [HttpGet]
         [Route("{id}")]

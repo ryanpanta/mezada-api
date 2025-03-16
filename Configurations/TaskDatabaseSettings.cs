@@ -1,7 +1,7 @@
 ﻿namespace WebApiMezada.Configurations
 {
-    public class FamilyGroupDatabaseSettings : DatabaseSettings
+    public class TaskDatabaseSettings : DatabaseSettings
     {
-        public string FamilyGroupCollectionName { get; set; }
+        public string TaskCollectionName { get; set; }
     }
 }

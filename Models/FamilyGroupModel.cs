@@ -14,6 +14,7 @@ namespace WebApiMezada.Models
         public ICollection<string> Users { get; set; } = new List<string>();
         public bool Active { get; set; } = true;
         public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+        public ICollection<string> Tasks { get; set; } = new List<string>();
 
     }
 }

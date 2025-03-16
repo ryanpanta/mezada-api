@@ -1,8 +1,9 @@
 ﻿namespace WebApiMezada.Models.Enums
 {
-    public enum EnumRoles
+    public enum EnumTaskStatus
     {
-        Parent = 1,
-        Child = 2,
+        Pending = 1,
+        Approved = 2,
+        Rejected = 3
     }
 }

@@ -16,6 +16,7 @@ namespace WebApiMezada.Models
         public EnumRoles Role { get; set; } = EnumRoles.Child;
         public bool Active { get; set; } = true;
         public string FamilyGroupId { get; set; } = string.Empty;
+        public ICollection<string> Tasks { get; set; } = new List<string>();
 
         public void SetParent()
         {
