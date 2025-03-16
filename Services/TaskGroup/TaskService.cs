@@ -26,6 +26,25 @@ namespace WebApiMezada.Services.TaskGroup
                 _validator = validator;
         }
 
+        public async Task<TaskStatsDTO> GetTaskStats(string familyGroupId)
+        {
+            //get thet asks where is active and familyGroupId is equal to the familyGroupId
+            var tasks = await _taskCollection.Find(t => t.Active == true && t.FamilyGroupId == familyGroupId).ToListAsync();
+            var total = tasks.Count;
+            var approved = tasks.Count(t => t.Status == EnumTaskStatus.Approved);
+            var rejected = tasks.Count(t => t.Status == EnumTaskStatus.Rejected);
+            var pending = tasks.Count(t => t.Status == EnumTaskStatus.Pending);
+
+            return new TaskStatsDTO
+            {
+                Total = total,
+                Approved = approved,
+                Rejected = rejected,
+                Pending = pending
+            };
+
+        }
+
         public async Task<TaskModel> GetTaskById(string id)
         {
             var task = await _taskCollection

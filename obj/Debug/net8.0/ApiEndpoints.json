@@ -154,6 +154,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "WebApiMezada.Controllers.TaskController",
+    "Method": "GetTaskStats",
+    "RelativePath": "api/Tasks/stats/{familyGroupId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "familyGroupId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "WebApiMezada.Controllers.UserController",
     "Method": "GetAll",
     "RelativePath": "api/Users",
@@ -164,6 +180,32 @@
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.List\u00601[[WebApiMezada.Models.UserModel, WebApiMezada, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.UserController",
+    "Method": "GetUserById",
+    "RelativePath": "api/Users/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebApiMezada.Models.UserModel",
         "MediaTypes": [
           "text/plain",
           "application/json",

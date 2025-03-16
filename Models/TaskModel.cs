@@ -14,6 +14,8 @@ namespace WebApiMezada.Models
         public string FamilyGroupId { get; set; }
         public string UserId { get; set; }
         public int Points { get; set; }
+        public bool Active { get; set; } = true;
+        public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 
     }
 }

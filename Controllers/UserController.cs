@@ -25,6 +25,20 @@ namespace WebApiMezada.Controllers
             return Ok(response);
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserModel>> GetUserById(string id)
+        {
+            try
+            {
+                var user = await _userService.GetUserById(id);
+                return Ok(new {Name = user.Name});
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Route("register")]
         public async Task<ActionResult> Register([FromBody] UserRegisterDTO userDTO)
@@ -74,7 +88,8 @@ namespace WebApiMezada.Controllers
                     UserId = user.Id,
                     Name = user.Name,
                     Email = user.Email,
-                    Role = user.Role
+                    Role = user.Role,
+                    FamilyGroupId = user.FamilyGroupId
                 });
             }
             catch (Exception ex)

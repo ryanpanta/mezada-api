@@ -15,6 +15,20 @@ namespace WebApiMezada.Controllers
             _taskService = taskService;
         }
 
+        [HttpGet("stats/{familyGroupId}")]
+        public async Task<IActionResult> GetTaskStats(string familyGroupId)
+        {
+            try
+            {
+                var stats = await _taskService.GetTaskStats(familyGroupId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskById(string id)
         {

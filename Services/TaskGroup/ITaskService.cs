@@ -1,4 +1,5 @@
-﻿using WebApiMezada.DTOs.Task;
+﻿using System.Globalization;
+using WebApiMezada.DTOs.Task;
 using WebApiMezada.Models;
 
 namespace WebApiMezada.Services.TaskGroup
@@ -11,5 +12,6 @@ namespace WebApiMezada.Services.TaskGroup
         Task SetAsApproved(string taskId, string parentUserId);
         Task SetAsRejected(string taskId, string parentUserId);
         Task Delete(string taskId, string userId);
+        Task<TaskStatsDTO> GetTaskStats(string familyGroupId);
     }
 }
