@@ -75,6 +75,12 @@ namespace WebApiMezada.Services.FamilyGroup
             await UpdateUserAsChild(user, familyGroup.Id);
         }
 
+        public async Task<FamilyGroupModel> Update(FamilyGroupModel familyGroup)
+        {
+            await _familyGroupCollection.ReplaceOneAsync(u => u.Id == familyGroup.Id, familyGroup);
+            return familyGroup;
+        }
+
         private string GenerateHashCode()
         {
             string str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

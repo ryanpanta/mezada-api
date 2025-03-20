@@ -6,6 +6,7 @@ using WebApiMezada.Models;
 using WebApiMezada.Services.User;
 using WebApiMezada.DTOs.Task;
 using FluentValidation;
+using WebApiMezada.Services.FamilyGroup;
 
 namespace WebApiMezada.Services.TaskGroup
 {
@@ -15,15 +16,17 @@ namespace WebApiMezada.Services.TaskGroup
        
         private readonly IMongoCollection<TaskModel> _taskCollection;
         private readonly IUserService _userService;
+        private readonly IFamilyGroupService _familyGroupService;
         private readonly IValidator<TaskCreateDTO> _validator;
 
-        public TaskService(IOptions<TaskDatabaseSettings> tasksSettings, IUserService userService, IValidator<TaskCreateDTO> validator)
+        public TaskService(IOptions<TaskDatabaseSettings> tasksSettings, IUserService userService, IValidator<TaskCreateDTO> validator, IFamilyGroupService familyGroupService)
             {
                 var client = new MongoClient(tasksSettings.Value.ConnectionString);
                 var database = client.GetDatabase(tasksSettings.Value.DatabaseName);
                 _taskCollection = database.GetCollection<TaskModel>(tasksSettings.Value.TaskCollectionName);
                 _userService = userService;
-                _validator = validator;
+                _familyGroupService = familyGroupService;
+            _validator = validator;
         }
 
         public async Task<TaskStatsDTO> GetTaskStats(string familyGroupId)
@@ -54,21 +57,36 @@ namespace WebApiMezada.Services.TaskGroup
             return task ?? throw new KeyNotFoundException("Tarefa não encontrada.");
         }
 
-        public async Task<List<TaskModel>> GetAll(int? statusFilter)
+        public async Task<List<TaskListDTO>> GetAll(int? statusFilter, string familyGroupId)
         {
-            var filter = Builders<TaskModel>.Filter.Empty;
+            var filter = Builders<TaskModel>.Filter.Eq(t => t.FamilyGroupId, familyGroupId);
 
             if (statusFilter.HasValue)
             {
                 if (!Enum.IsDefined(typeof(EnumTaskStatus), statusFilter.Value))
                     throw new ArgumentException("Status inválido.", nameof(statusFilter));
 
-                filter = Builders<TaskModel>.Filter.Eq(t => t.Status, (EnumTaskStatus)statusFilter.Value);
+                var statusFilterDef = Builders<TaskModel>.Filter.Eq(t => t.Status, (EnumTaskStatus)statusFilter.Value);
+                filter = Builders<TaskModel>.Filter.And(filter, statusFilterDef);
             }
 
-            return await _taskCollection
+            var tasks = await _taskCollection
                 .Find(filter)
                 .ToListAsync();
+
+            return tasks.Select(t => new TaskListDTO
+            {
+                Active = t.Active,
+                FamilyGroupId = t.FamilyGroupId,
+                UserId = t.UserId,
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Points = t.Points,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UserName = _userService.GetUserById(t.UserId).Result.Name
+            }).ToList();
         }
 
         public async Task<TaskModel> Create(TaskCreateDTO taskDTO, string userId)
@@ -81,6 +99,8 @@ namespace WebApiMezada.Services.TaskGroup
             var user = await GetUserOrThrow(userId);
             EnsureUserHasFamilyGroup(user);
 
+            var familyGroup = await GeFamilyGroupOrThrow(user.FamilyGroupId);
+
             var task = new TaskModel
             {
                 Title = taskDTO.Title,
@@ -92,6 +112,7 @@ namespace WebApiMezada.Services.TaskGroup
 
             await _taskCollection.InsertOneAsync(task);
             UpdateUserTask(user, task.Id);
+            UpdateFamilyGroupTask(familyGroup, task.Id);
 
             return task;
         }
@@ -145,6 +166,12 @@ namespace WebApiMezada.Services.TaskGroup
             return user ?? throw new KeyNotFoundException("Usuário não encontrado.");
         }
 
+        private async Task<FamilyGroupModel> GeFamilyGroupOrThrow(string familyGroupId)
+        {
+            var familyGroup = await _familyGroupService.GetFamilyGroupById(familyGroupId);
+            return familyGroup ?? throw new KeyNotFoundException("Grupo familiar não encontrado.");
+        }
+
         private void EnsureUserHasFamilyGroup(UserModel user)
         {
             if (string.IsNullOrEmpty(user.FamilyGroupId))
@@ -173,6 +200,12 @@ namespace WebApiMezada.Services.TaskGroup
         {
             user.Tasks.Add(taskId);
             await _userService.Update(user);
+        }
+
+        private async void UpdateFamilyGroupTask(FamilyGroupModel familyGroup, string taskId)
+        {
+            familyGroup.Tasks.Add(taskId);
+            await _familyGroupService.Update(familyGroup);
         }
 
     }

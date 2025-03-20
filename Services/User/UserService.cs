@@ -66,6 +66,8 @@ namespace WebApiMezada.Services.User
                 Name = userDTO.Name,
                 Email = userDTO.Email,
                 Password = passwordHash,
+                Color = GenerateColorAndBackGround().Color,
+                BackgroundColor = GenerateColorAndBackGround().BackgroundColor
             };
 
             await _userCollection.InsertOneAsync(user);
@@ -88,6 +90,39 @@ namespace WebApiMezada.Services.User
             var user = await GetUserById(userId);
             user.SetParent();
             await Update(user);
+        }
+
+        private ColorScheme GenerateColorAndBackGround()
+        {
+            var colors = new string[]
+             {
+                "#FFFFFF", // Branco para texto
+                "#F0F4C3", // Verde limão claro
+                "#B3E5FC", // Azul claro
+                "#FFCCBC", // Coral claro
+                "#D1C4E9", // Roxo claro
+                "#FFECB3"  // Amarelo claro
+             };
+     
+            var backgroundColors = new string[]
+            {
+                "#1976D2", // Azul escuro
+                "#388E3C", // Verde escuro
+                "#0288D1", // Azul médio
+                "#D81B60", // Rosa escuro
+                "#7B1FA2", // Roxo escuro
+                "#F57C00"  // Laranja escuro
+            };
+
+            var random = new Random().Next(0, colors.Length);
+
+            var color = colors[random];
+            var backgroundColor = backgroundColors[random];
+
+            return new ColorScheme { 
+                Color = color, 
+                BackgroundColor = backgroundColor
+            };
         }
 
     }

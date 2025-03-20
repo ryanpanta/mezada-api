@@ -31,7 +31,7 @@ namespace WebApiMezada.Controllers
             try
             {
                 var user = await _userService.GetUserById(id);
-                return Ok(new {Name = user.Name});
+                return Ok(new {Name = user.Name, Color = user.Color, BackgroundColor = user.BackgroundColor});
             }
             catch (Exception ex)
             {

@@ -183,6 +183,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "familyGroupId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -552,6 +559,14 @@
             "items": {
               "type": "string"
             },
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "backgroundColor": {
+            "type": "string",
             "nullable": true
           }
         },

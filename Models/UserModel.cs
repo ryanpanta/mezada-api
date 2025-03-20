@@ -17,6 +17,8 @@ namespace WebApiMezada.Models
         public bool Active { get; set; } = true;
         public string FamilyGroupId { get; set; } = string.Empty;
         public ICollection<string> Tasks { get; set; } = new List<string>();
+        public string Color { get; set; }
+        public string BackgroundColor { get; set; }
 
         public void SetParent()
         {

@@ -44,11 +44,11 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? status)
+        public async Task<IActionResult> GetAll([FromQuery] int? status, [FromQuery] string familyGroupId)
         {
             try
             {
-                var tasks = await _taskService.GetAll(status);
+                var tasks = await _taskService.GetAll(status, familyGroupId);
                 return Ok(tasks);
             }
             catch (Exception ex)
