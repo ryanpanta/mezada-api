@@ -39,6 +39,34 @@ namespace WebApiMezada.Controllers
             }
         }
 
+        [HttpPut("/SetAsParent")]
+        public async Task<ActionResult> SetAsParent([FromBody] string id)
+        {
+            try
+            {
+                await _userService.SetAsParent(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+        }
+
+        [HttpGet("/FamilyGroup/{id}")]
+        public async Task<ActionResult<UserModel>> GetUsersByFamilyGroup(string id)
+        {
+            try
+            {
+                var users = await _userService.GetUsersByFamilyGroup(id);
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Route("register")]
         public async Task<ActionResult> Register([FromBody] UserRegisterDTO userDTO)

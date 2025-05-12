@@ -49,17 +49,52 @@ builder.Services.Configure<TaskDatabaseSettings>(options =>
     options.TaskCollectionName = taskSettings.TaskCollectionName;
 });
 
+//setting up task assignment database settings
+builder.Services.Configure<TaskAssignmentDatabaseSettings>(options =>
+{
+    var dbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+    var taskAssignmentSettings = builder.Configuration.GetSection("Collections:TaskAssignments").Get<TaskAssignmentDatabaseSettings>();
+    options.ConnectionString = dbSettings.ConnectionString;
+    options.DatabaseName = dbSettings.DatabaseName;
+    options.TaskAssignmentCollectionName = taskAssignmentSettings.TaskAssignmentCollectionName;
+});
+
+//settings up suggestions database settings
+builder.Services.Configure<SuggestionDatabaseSettings>(options =>
+{
+    var dbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+    var suggestionSettings = builder.Configuration.GetSection("Collections:Suggestions").Get<SuggestionDatabaseSettings>();
+    options.ConnectionString = dbSettings.ConnectionString;
+    options.DatabaseName = dbSettings.DatabaseName;
+    options.SuggestionCollectionName = suggestionSettings.SuggestionCollectionName;
+});
+
+//setting up task history database settings
+builder.Services.Configure<TaskHistoryDatabaseSettings>(options =>
+{
+    var dbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+    var taskHistorySettings = builder.Configuration.GetSection("Collections:TaskHistories").Get<TaskHistoryDatabaseSettings>();
+    options.ConnectionString = dbSettings.ConnectionString;
+    options.DatabaseName = dbSettings.DatabaseName;
+    options.TaskHistoryCollectionName = taskHistorySettings.TaskHistoryCollectionName;
+});
+
+//setting up cycle database settings
+builder.Services.Configure<CycleDatabaseSettings>(options =>
+{
+    var dbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+    var cycleSettings = builder.Configuration.GetSection("Collections:Cycles").Get<CycleDatabaseSettings>();
+    options.ConnectionString = dbSettings.ConnectionString;
+    options.DatabaseName = dbSettings.DatabaseName;
+    options.CycleCollectionName = cycleSettings.CycleCollectionName;
+});
+
+
 builder.Services.AddScoped<IValidator<TaskCreateDTO>, TaskCreateValidator>();
 builder.Services.AddSingleton<UserRegisterValidator>();
-
-
-
 builder.Services.AddScoped<IUserService, UserService>();
-
 builder.Services.AddScoped<IFamilyGroupService, FamilyGroupService>();
-
 builder.Services.AddScoped<ITaskService, TaskService>();
-
 
 
 builder.Services.AddCors(options =>

@@ -2,7 +2,7 @@
 {
     public enum EnumRoles
     {
-        Parent = 1,
-        Child = 2,
+        Parent,
+        Child,
     }
 }

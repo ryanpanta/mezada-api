@@ -4,8 +4,7 @@
     {
         
         public int Total { get; set; }
-        public int Approved { get; set; }
-        public int Pending { get; set; }
-        public int Rejected { get; set; }
+        public int Rewards { get; set; }
+        public int Penalties { get; set; }
     }
 }

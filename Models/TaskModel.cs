@@ -8,12 +8,15 @@ namespace WebApiMezada.Models
         [BsonId]
         [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
         public string Id { get; set; }
-        public string Title { get; set; }
+        public string CycleId { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
         public string Description { get; set; }
-        public EnumTaskStatus Status { get; set; } = EnumTaskStatus.Pending;
+        public EnumCategory Category { get; set; }
         public string FamilyGroupId { get; set; }
         public string UserId { get; set; }
-        public int Points { get; set; }
+        public int InitialValue { get; set; } = 0;
+        public int DefaultIncrement { get; set; }
+        public int LimitValue { get; set; }
         public bool Active { get; set; } = true;
         public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 

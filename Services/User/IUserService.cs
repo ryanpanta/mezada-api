@@ -11,5 +11,8 @@ namespace WebApiMezada.Services.User
         Task<List<UserModel>> GetAll();
         Task<UserModel> Update(UserModel user);
         Task SetParent(string userId);
+        Task<List<UserModel>> GetUsersByFamilyGroup(string id);
+        Task SetAsParent(string id);
+
     }
 }

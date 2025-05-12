@@ -4,9 +4,9 @@ using WebApiMezada.Models.Enums;
 
 namespace WebApiMezada.Services.TaskGroup.Validators
 {
-    public class TaskCreateValidator : AbstractValidator<TaskCreateDTO>
+    public class TaskUpdateValidator : AbstractValidator<TaskUpdateDTO>
     {
-        public TaskCreateValidator()
+        public TaskUpdateValidator()
         {
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("O título da tarefa é obrigatório.")

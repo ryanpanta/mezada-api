@@ -5,6 +5,7 @@ using WebApiMezada.Models;
 using BCrypt.Net;
 using WebApiMezada.DTOs.User;
 using WebApiMezada.Services.User.Validators;
+using WebApiMezada.Models.Enums;
 
 namespace WebApiMezada.Services.User
 {
@@ -125,5 +126,21 @@ namespace WebApiMezada.Services.User
             };
         }
 
+        public async Task<List<UserModel>> GetUsersByFamilyGroup(string id)
+        {
+            if(string.IsNullOrEmpty(id))
+            {
+                throw new Exception("Id da família não informado.");
+            }
+
+            return await _userCollection.Find(u => u.FamilyGroupId == id).ToListAsync();
+        }
+
+        public async Task SetAsParent(string id)
+        {
+            var user = await GetUserById(id);
+            user.Role = EnumRoles.Parent;
+            await Update(user);
+        }
     }
 }

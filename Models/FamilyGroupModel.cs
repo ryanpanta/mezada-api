@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using WebApiMezada.Models.Enums;
 
 namespace WebApiMezada.Models
 {

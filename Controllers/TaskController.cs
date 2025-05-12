@@ -42,13 +42,31 @@ namespace WebApiMezada.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? status, [FromQuery] string familyGroupId)
+        
+        [HttpGet("filters/{familyGroupId}")]
+        public async Task<IActionResult> GetFilters(string familyGroupId)
         {
             try
             {
-                var tasks = await _taskService.GetAll(status, familyGroupId);
+                var filters = await _taskService.GetFilters(familyGroupId);
+                return Ok(filters);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] string filter, [FromQuery] string groupId)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var tasks = await _taskService.GetAll(filter, groupId, userId);
                 return Ok(tasks);
             }
             catch (Exception ex)
@@ -70,42 +88,6 @@ namespace WebApiMezada.Controllers
                 return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, task);
             }
           
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        [HttpPut("{id}/approve")]
-        public async Task<IActionResult> SetAsApproved(string id)
-        {
-            try
-            {
-                var parentUserId = Request.Headers["X-User-Id"].ToString();
-                if (string.IsNullOrEmpty(parentUserId))
-                    return Unauthorized(new { Message = "Usuário não autenticado." });
-
-                await _taskService.SetAsApproved(id, parentUserId);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-        }
-
-        [HttpPut("{id}/reject")]
-        public async Task<IActionResult> SetAsRejected(string id)
-        {
-            try
-            {
-                var parentUserId = Request.Headers["X-User-Id"].ToString();
-                if (string.IsNullOrEmpty(parentUserId))
-                    return Unauthorized(new { Message = "Usuário não autenticado." });
-
-                await _taskService.SetAsRejected(id, parentUserId);
-                return NoContent();
-            }
             catch (Exception ex)
             {
                 return BadRequest(new { Message = ex.Message });
