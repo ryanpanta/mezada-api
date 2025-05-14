@@ -33,6 +33,24 @@ namespace WebApiMezada.Controllers
                 return NotFound(new { Message = ex.Message });
             }
         }
+        
+        [HttpGet("{id}/info")]
+        public async Task<ActionResult<FamilyGroupInfoDTO>> GetGroupInfo([FromRoute] string id)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var info = await _familyGroupService.GetGroupInfo(id, userId);
+                return Ok(info);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         [HttpPost]
         [Route("create")]
@@ -64,6 +82,24 @@ namespace WebApiMezada.Controllers
                 await _familyGroupService.Join(hashCode.HashCode, userId);
 
                 return Ok(new { Message = "Parabéns, você entrou no grupo familiar." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        
+        [HttpPost("{id}/set-admin")]
+        public async Task<ActionResult> SetAdmin([FromRoute] string id, [FromBody] string newParentId)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var result = await _familyGroupService.SetAdmin(id, newParentId, userId);
+                return Ok(new { Message = result });
             }
             catch (Exception ex)
             {

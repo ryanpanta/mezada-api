@@ -1,7 +1,9 @@
 using FluentValidation;
 using WebApiMezada.Configurations;
+using WebApiMezada.DTOs.Suggestion;
 using WebApiMezada.DTOs.Task;
 using WebApiMezada.Services.FamilyGroup;
+using WebApiMezada.Services.FamilyGroup.Validators;
 using WebApiMezada.Services.TaskGroup;
 using WebApiMezada.Services.TaskGroup.Validators;
 using WebApiMezada.Services.User;
@@ -91,6 +93,7 @@ builder.Services.Configure<CycleDatabaseSettings>(options =>
 
 
 builder.Services.AddScoped<IValidator<TaskCreateDTO>, TaskCreateValidator>();
+builder.Services.AddScoped<IValidator<SuggestionCreateDTO>, SuggestionCreateValidator>();
 builder.Services.AddSingleton<UserRegisterValidator>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFamilyGroupService, FamilyGroupService>();

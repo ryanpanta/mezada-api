@@ -372,12 +372,24 @@ namespace WebApiMezada.Services.TaskGroup
         public async Task Delete(string taskId, string userId)
         {
             ValidateUserId(userId);
-            var task = await GetTaskOrThrow(taskId);
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Somente os pais podem excluir esta tarefa.");
 
-            if (task.UserId != userId)
-                throw new UnauthorizedAccessException("Somente o criador da tarefa pode excluí-la.");
+            var task = await _taskCollection.Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active).FirstOrDefaultAsync();
+            if (task == null)
+                throw new KeyNotFoundException("Tarefa não encontrada.");
 
-            await _taskCollection.DeleteOneAsync(t => t.Id == taskId);
+            await _taskCollection.UpdateOneAsync(
+                t => t.Id == taskId,
+                Builders<TaskModel>.Update.Set(t => t.Active, false)
+            );
+
+            // excluir todas as atribuições associadas
+            await _taskAssignmentCollection.UpdateManyAsync(
+                ta => ta.TaskId == taskId,
+                Builders<TaskAssignmentModel>.Update.Set(ta => ta.IsDeleted, true)
+            );
         }
 
         private void ValidateUserId(string userId)
