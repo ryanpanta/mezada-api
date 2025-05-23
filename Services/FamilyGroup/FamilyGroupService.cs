@@ -12,17 +12,19 @@ namespace WebApiMezada.Services.FamilyGroup
     {
         private readonly IMongoCollection<FamilyGroupModel> _familyGroupCollection;
         private readonly IMongoCollection<UserModel> _userCollection;
+        private readonly IMongoCollection<CycleModel> _cycleCollection;
         private readonly IUserService _userService;
 
 
         public FamilyGroupService(IOptions<FamilyGroupDatabaseSettings> familyGroupsSettings, IUserService userService,
-            IOptions<UserDatabaseSettings> userSettings)
+            IOptions<UserDatabaseSettings> userSettings, IOptions<CycleDatabaseSettings> cycleSettings)
         {
             var client = new MongoClient(familyGroupsSettings.Value.ConnectionString);
             var database = client.GetDatabase(familyGroupsSettings.Value.DatabaseName);
             _familyGroupCollection =
                 database.GetCollection<FamilyGroupModel>(familyGroupsSettings.Value.FamilyGroupCollectionName);
             _userCollection = database.GetCollection<UserModel>(userSettings.Value.UserCollectionName);
+            _cycleCollection = database.GetCollection<CycleModel>(cycleSettings.Value.CycleCollectionName);
             _userService = userService;
         }
 
@@ -82,6 +84,14 @@ namespace WebApiMezada.Services.FamilyGroup
 
             await _familyGroupCollection.InsertOneAsync(family);
             await UpdateUserAsParent(user, family.Id);
+
+            var newCycle = new CycleModel
+            {
+                FamilyGroupId = family.Id,
+                IsActive = true,
+                StartDate = DateTime.UtcNow
+            };
+            await _cycleCollection.InsertOneAsync(newCycle);
 
             return family;
         }

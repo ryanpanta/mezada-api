@@ -33,7 +33,6 @@ D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\staticwebassets\msbuil
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.WebApiMezada.props
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.WebApiMezada.props
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\staticwebassets.pack.json
-D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\WebApiMe.CDDD4173.Up2Date
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\WebApiMezada.dll
 D:\TCC\projeto\WebApiMezada\WebApiMezada\obj\Debug\net8.0\refint\WebApiMezada.dll

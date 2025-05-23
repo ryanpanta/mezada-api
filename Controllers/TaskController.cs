@@ -93,6 +93,43 @@ namespace WebApiMezada.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] TaskUpdateDTO taskDTO)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                taskDTO.Id = id;
+                var task = await _taskService.Update(taskDTO, userId);
+                return Ok(task);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpPost("account-points")]
+        public async Task<IActionResult> AccountPoints([FromBody] AccountPointsDTO dto)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                await _taskService.AccountPoints(dto, userId);
+                return Ok(new { Message = "Pontos contabilizados com sucesso." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
@@ -105,6 +142,42 @@ namespace WebApiMezada.Controllers
 
                 await _taskService.Delete(id, userId);
                 return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        
+        [HttpGet("cycle-summary/{groupId}")]
+        public async Task<IActionResult> GetCycleSummary([FromRoute] string groupId)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var summary = await _taskService.GetCycleSummary(groupId, userId);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpPost("end-cycle/{groupId}")]
+        public async Task<IActionResult> EndCycle([FromRoute] string groupId)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                await _taskService.EndCycle(groupId, userId);
+                return Ok(new { Message = "Ciclo encerrado e novo ciclo iniciado com sucesso." });
             }
             catch (Exception ex)
             {

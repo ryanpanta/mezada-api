@@ -16,7 +16,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("X-User-Id", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "Insira o ID do usuário no formato: 'X-User-Id: <user-id>'",
+        Name = "X-User-Id",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "X-User-Id"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 builder.Services.Configure<DatabaseSettings>(
     builder.Configuration.GetSection("DatabaseSettings"));
@@ -93,11 +117,15 @@ builder.Services.Configure<CycleDatabaseSettings>(options =>
 
 
 builder.Services.AddScoped<IValidator<TaskCreateDTO>, TaskCreateValidator>();
+builder.Services.AddScoped<IValidator<TaskUpdateDTO>, TaskUpdateValidator>();
 builder.Services.AddScoped<IValidator<SuggestionCreateDTO>, SuggestionCreateValidator>();
 builder.Services.AddSingleton<UserRegisterValidator>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFamilyGroupService, FamilyGroupService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskHistoryService, TaskHistoryService>();
+builder.Services.AddScoped<ICycleService, CycleService>();
+builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 
 
 builder.Services.AddCors(options =>

@@ -4,6 +4,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using WebApiMezada.Configurations;
 using WebApiMezada.DTOs.Task;
+using WebApiMezada.DTOs.TaskHistory;
 using WebApiMezada.Models;
 using WebApiMezada.Models.Enums;
 using WebApiMezada.Services.FamilyGroup;
@@ -17,6 +18,7 @@ namespace WebApiMezada.Services.TaskGroup
         private readonly IMongoCollection<TaskAssignmentModel> _taskAssignmentCollection;
         private readonly IMongoCollection<UserModel> _userCollection;
         private readonly IMongoCollection<TaskHistoryModel> _taskHistoryCollection;
+        private readonly IMongoCollection<CycleModel> _cycleCollection;
         private readonly IUserService _userService;
         private readonly IFamilyGroupService _familyGroupService;
         private readonly ICycleService _cycleService;
@@ -28,7 +30,7 @@ namespace WebApiMezada.Services.TaskGroup
             IValidator<TaskCreateDTO> validator, IFamilyGroupService familyGroupService, ICycleService cycleService,
             IOptions<TaskAssignmentDatabaseSettings> taskAssignmentSettings,
             IOptions<UserDatabaseSettings> userSettings, IValidator<TaskUpdateDTO> updateValidator,
-            IOptions<TaskHistoryDatabaseSettings> taskHistorySettings)
+            IOptions<TaskHistoryDatabaseSettings> taskHistorySettings, IOptions<CycleDatabaseSettings> cycleSettings)
         {
             var client = new MongoClient(tasksSettings.Value.ConnectionString);
             var database = client.GetDatabase(tasksSettings.Value.DatabaseName);
@@ -38,6 +40,8 @@ namespace WebApiMezada.Services.TaskGroup
             _userCollection = database.GetCollection<UserModel>(userSettings.Value.UserCollectionName);
             _taskHistoryCollection =
                 database.GetCollection<TaskHistoryModel>(taskHistorySettings.Value.TaskHistoryCollectionName);
+            _cycleCollection =
+                database.GetCollection<CycleModel>(cycleSettings.Value.CycleCollectionName);
             _userService = userService;
             _familyGroupService = familyGroupService;
             _validator = validator;
@@ -376,7 +380,8 @@ namespace WebApiMezada.Services.TaskGroup
             if (user.Role != EnumRoles.Parent)
                 throw new UnauthorizedAccessException("Somente os pais podem excluir esta tarefa.");
 
-            var task = await _taskCollection.Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active).FirstOrDefaultAsync();
+            var task = await _taskCollection
+                .Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active).FirstOrDefaultAsync();
             if (task == null)
                 throw new KeyNotFoundException("Tarefa não encontrada.");
 
@@ -389,6 +394,194 @@ namespace WebApiMezada.Services.TaskGroup
             await _taskAssignmentCollection.UpdateManyAsync(
                 ta => ta.TaskId == taskId,
                 Builders<TaskAssignmentModel>.Update.Set(ta => ta.IsDeleted, true)
+            );
+        }
+
+        public async Task<List<TaskHistoryListDTO>> GetTaskHistory(string taskId, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            var task = await _taskCollection.Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active)
+                .FirstOrDefaultAsync();
+            if (task == null)
+                throw new KeyNotFoundException("Tarefa não encontrada.");
+
+            var history = await _taskHistoryCollection
+                .Find(h => h.TaskId == taskId && !h.IsDeleted)
+                .ToListAsync();
+
+            var historyDtos = new List<TaskHistoryListDTO>();
+            foreach (var item in history)
+            {
+                var child = await _userCollection.Find(u => u.Id == item.ChildId).FirstOrDefaultAsync();
+                var accountedBy = await _userCollection.Find(u => u.Id == item.AccountedBy).FirstOrDefaultAsync();
+
+                historyDtos.Add(new TaskHistoryListDTO
+                {
+                    Id = item.Id,
+                    TaskId = item.TaskId,
+                    ChildId = item.ChildId,
+                    ChildName = child?.Name ?? "Desconhecido",
+                    AccountedById = item.AccountedBy,
+                    AccountedByName = accountedBy?.Name ?? "Desconhecido",
+                    Value = item.Value,
+                    AccountedAt = item.CreatedAt,
+                    IsReverted = item.IsReverted
+                });
+            }
+
+            return historyDtos.OrderByDescending(h => h.AccountedAt).ToList();
+        }
+
+        public async Task RevertHistory(RevertHistoryDTO dto, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Apenas pais podem reverter contabilizações.");
+
+            var history = await _taskHistoryCollection
+                .Find(h => h.Id == dto.HistoryId && !h.IsReverted && !h.IsDeleted)
+                .FirstOrDefaultAsync();
+            if (history == null)
+                throw new KeyNotFoundException("Histórico não encontrado ou já revertido.");
+
+            var assignment = await _taskAssignmentCollection
+                .Find(ta => ta.TaskId == history.TaskId && ta.ChildId == history.ChildId && !ta.IsDeleted)
+                .FirstOrDefaultAsync();
+            if (assignment == null)
+                throw new KeyNotFoundException("Atribuição não encontrada.");
+
+            // Reverter o valor contabilizado
+            var revertValue = -history.Value; // Inverte o sinal do valor original
+            var newBalance = assignment.CurrentBalance + revertValue;
+            var limitValue =
+                (await _taskCollection.Find(t => t.Id == history.TaskId).FirstOrDefaultAsync())?.LimitValue ?? 0;
+
+            int updatedBalance, bonusBalance;
+            if ((await _taskCollection.Find(t => t.Id == history.TaskId).FirstOrDefaultAsync())?.Category ==
+                EnumCategory.Reward)
+            {
+                updatedBalance = Math.Min(Math.Max(newBalance, 0), limitValue);
+                bonusBalance = Math.Max(0, newBalance - limitValue);
+            }
+            else
+            {
+                updatedBalance = Math.Max(Math.Min(newBalance, 0), limitValue);
+                bonusBalance = Math.Min(0, newBalance);
+            }
+
+            await _taskAssignmentCollection.UpdateOneAsync(
+                ta => ta.Id == assignment.Id,
+                Builders<TaskAssignmentModel>.Update
+                    .Set(ta => ta.CurrentBalance, updatedBalance)
+                    .Set(ta => ta.BonusBalance, bonusBalance)
+            );
+
+            // Marcar o histórico como revertido
+            await _taskHistoryCollection.UpdateOneAsync(
+                h => h.Id == history.Id,
+                Builders<TaskHistoryModel>.Update.Set(h => h.IsReverted, true)
+            );
+        }
+        
+        public async Task<CycleSummaryDTO> GetCycleSummary(string groupId, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Apenas pais podem visualizar o resumo do ciclo.");
+
+            var activeCycle = await _cycleCollection
+                .Find(c => c.FamilyGroupId == groupId && c.IsActive)
+                .FirstOrDefaultAsync();
+            if (activeCycle == null)
+                throw new InvalidOperationException("Nenhum ciclo ativo encontrado.");
+
+            var tasks = await _taskCollection
+                .Find(t => t.FamilyGroupId == groupId && t.CycleId == activeCycle.Id && t.Active)
+                .ToListAsync();
+
+            var assignments = await _taskAssignmentCollection
+                .Find(Builders<TaskAssignmentModel>.Filter.In(ta => ta.TaskId, tasks.Select(t => t.Id)) & Builders<TaskAssignmentModel>.Filter.Eq(ta => ta.IsDeleted, false))
+                .ToListAsync();
+
+            var summary = new CycleSummaryDTO
+            {
+                GroupId = groupId,
+                CycleId = activeCycle.Id,
+                TotalPositiveBalance = 0,
+                TotalNegativeBalance = 0,
+                TaskBalances = new List<TaskBalanceDTO>()
+            };
+
+            foreach (var task in tasks)
+            {
+                var taskAssignments = assignments.Where(ta => ta.TaskId == task.Id).ToList();
+                foreach (var assignment in taskAssignments)
+                {
+                    var balance = assignment.CurrentBalance + assignment.BonusBalance;
+                    if (balance > 0)
+                        summary.TotalPositiveBalance += balance;
+                    else
+                        summary.TotalNegativeBalance += balance;
+
+                    summary.TaskBalances.Add(new TaskBalanceDTO
+                    {
+                        TaskId = task.Id,
+                        Title = task.Title,
+                        CurrentBalance = assignment.CurrentBalance,
+                        BonusBalance = assignment.BonusBalance
+                    });
+                }
+            }
+
+            return summary;
+        }
+        
+        public async Task EndCycle(string groupId, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Apenas pais podem encerrar o ciclo.");
+
+            var activeCycle = await _cycleCollection
+                .Find(c => c.FamilyGroupId == groupId && c.IsActive)
+                .FirstOrDefaultAsync();
+            if (activeCycle == null)
+                throw new InvalidOperationException("Nenhum ciclo ativo encontrado.");
+
+            // Desativar o ciclo atual
+            await _cycleCollection.UpdateOneAsync(
+                c => c.Id == activeCycle.Id,
+                Builders<CycleModel>.Update.Set(c => c.IsActive, false)
+            );
+
+            // Criar novo ciclo
+            var newCycle = new CycleModel
+            {
+                FamilyGroupId = groupId,
+                IsActive = true,
+                StartDate = DateTime.UtcNow
+            };
+            await _cycleCollection.InsertOneAsync(newCycle);
+
+            // Resetar saldos das atribuições
+            var tasks = await _taskCollection
+                .Find(t => t.FamilyGroupId == groupId && t.Active)
+                .ToListAsync();
+
+            foreach (var task in tasks)
+            {
+                await _taskAssignmentCollection.UpdateManyAsync(
+                    ta => ta.TaskId == task.Id,
+                    Builders<TaskAssignmentModel>.Update
+                        .Set(ta => ta.CurrentBalance, 0)
+                        .Set(ta => ta.BonusBalance, 0)
+                );
+            }
+
+            // Atualizar as tarefas para o novo ciclo
+            await _taskCollection.UpdateManyAsync(
+                t => t.FamilyGroupId == groupId && t.Active,
+                Builders<TaskModel>.Update.Set(t => t.CycleId, newCycle.Id)
             );
         }
 
