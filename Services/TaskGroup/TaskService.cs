@@ -65,16 +65,77 @@ namespace WebApiMezada.Services.TaskGroup
             };
         }
 
-        public async Task<TaskModel> GetTaskById(string id)
+        public async Task<object> GetTaskById(string id, string userId)
         {
-            var task = await _taskCollection
-                .Find(t => t.Id == id)
-                .FirstOrDefaultAsync();
+            var user = await GetUserOrThrow(userId);
+            var task = await _taskCollection.Find(t => t.Id == id && t.Active).FirstOrDefaultAsync();
+            if (task == null)
+                throw new KeyNotFoundException("Tarefa não encontrada.");
 
-            return task ?? throw new KeyNotFoundException("Tarefa não encontrada.");
+            if (task.FamilyGroupId != user.FamilyGroupId)
+                throw new UnauthorizedAccessException("Você não tem acesso a esta tarefa.");
+
+            if (user.Role == EnumRoles.Parent)
+            {
+                var assignments = await _taskAssignmentCollection
+                    .Find(ta => ta.TaskId == id && !ta.IsDeleted)
+                    .ToListAsync();
+
+                var childrenDetails = new List<ChildTaskDetailsDTO>();
+                foreach (var assignment in assignments)
+                {
+                    var child = await _userCollection.Find(u => u.Id == assignment.ChildId).FirstOrDefaultAsync();
+                    if (child != null)
+                    {
+                        childrenDetails.Add(new ChildTaskDetailsDTO
+                        {
+                            ChildId = assignment.ChildId,
+                            ChildName = child.Name,
+                            CurrentBalance = assignment.CurrentBalance,
+                            BonusBalance = assignment.BonusBalance,
+                            CustomIncrement = assignment.CustomIncrement
+                        });
+                    }
+                }
+
+                return new TaskDetailsForParentDTO()
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Description = task.Description,
+                    Category = task.Category.ToString(),
+                    InitialValue = task.InitialValue,
+                    DefaultIncrement = task.DefaultIncrement,
+                    LimitValue = task.LimitValue,
+                    Children = childrenDetails
+                };
+            }
+            // Se o usuário for filho, retornar visão limitada
+            else
+            {
+                var assignment = await _taskAssignmentCollection
+                    .Find(ta => ta.TaskId == id && ta.ChildId == userId && !ta.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                if (assignment == null)
+                    throw new UnauthorizedAccessException("Você não está associado a esta tarefa.");
+
+                return new TaskDetailsForChildDTO
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Description = task.Description,
+                    Category = task.Category.ToString(),
+                    InitialValue = task.InitialValue,
+                    DefaultIncrement = task.DefaultIncrement,
+                    LimitValue = task.LimitValue,
+                    CurrentBalance = assignment.CurrentBalance,
+                    BonusBalance = assignment.BonusBalance
+                };
+            }
         }
 
-        public async Task<List<TaskListDTO>> GetAll(string filter, string groupId, string userId)
+        public async Task<List<TaskListDTO>> GetAll(string? filter, string groupId, string userId)
         {
             var isParent = (await _userService.GetUserById(userId))?.Role == EnumRoles.Parent;
 
@@ -400,7 +461,8 @@ namespace WebApiMezada.Services.TaskGroup
         public async Task<List<TaskHistoryListDTO>> GetTaskHistory(string taskId, string userId)
         {
             var user = await GetUserOrThrow(userId);
-            var task = await _taskCollection.Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active)
+            var task = await _taskCollection
+                .Find(t => t.Id == taskId && t.FamilyGroupId == user.FamilyGroupId && t.Active)
                 .FirstOrDefaultAsync();
             if (task == null)
                 throw new KeyNotFoundException("Tarefa não encontrada.");
@@ -482,7 +544,7 @@ namespace WebApiMezada.Services.TaskGroup
                 Builders<TaskHistoryModel>.Update.Set(h => h.IsReverted, true)
             );
         }
-        
+
         public async Task<CycleSummaryDTO> GetCycleSummary(string groupId, string userId)
         {
             var user = await GetUserOrThrow(userId);
@@ -500,7 +562,8 @@ namespace WebApiMezada.Services.TaskGroup
                 .ToListAsync();
 
             var assignments = await _taskAssignmentCollection
-                .Find(Builders<TaskAssignmentModel>.Filter.In(ta => ta.TaskId, tasks.Select(t => t.Id)) & Builders<TaskAssignmentModel>.Filter.Eq(ta => ta.IsDeleted, false))
+                .Find(Builders<TaskAssignmentModel>.Filter.In(ta => ta.TaskId, tasks.Select(t => t.Id)) &
+                      Builders<TaskAssignmentModel>.Filter.Eq(ta => ta.IsDeleted, false))
                 .ToListAsync();
 
             var summary = new CycleSummaryDTO
@@ -535,7 +598,8 @@ namespace WebApiMezada.Services.TaskGroup
 
             return summary;
         }
-        
+
+
         public async Task EndCycle(string groupId, string userId)
         {
             var user = await GetUserOrThrow(userId);
@@ -585,6 +649,38 @@ namespace WebApiMezada.Services.TaskGroup
             );
         }
 
+        public async Task RemoveChildFromTask(RemoveChildFromTaskDTO dto, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Apenas pais podem remover filhos de tarefas.");
+
+            var task = await _taskCollection.Find(t => t.Id == dto.TaskId && t.Active).FirstOrDefaultAsync();
+            if (task == null)
+                throw new KeyNotFoundException("Tarefa não encontrada.");
+
+            var assignment = await _taskAssignmentCollection
+                .Find(ta => ta.TaskId == dto.TaskId && ta.ChildId == dto.ChildId && !ta.IsDeleted)
+                .FirstOrDefaultAsync();
+            if (assignment == null)
+                throw new KeyNotFoundException("Atribuição não encontrada para este filho e tarefa.");
+
+            var activeCycle = await _cycleCollection
+                .Find(c => c.FamilyGroupId == task.FamilyGroupId && c.IsActive)
+                .FirstOrDefaultAsync();
+            if (activeCycle == null)
+                throw new InvalidOperationException("Nenhum ciclo ativo encontrado para o grupo.");
+
+            if (task.CycleId != activeCycle.Id)
+                throw new InvalidOperationException("A tarefa não pertence ao ciclo ativo atual.");
+
+            await _taskAssignmentCollection.UpdateOneAsync(
+                ta => ta.Id == assignment.Id,
+                Builders<TaskAssignmentModel>.Update
+                    .Set(ta => ta.IsDeleted, true)
+            );
+        }
+
         private void ValidateUserId(string userId)
         {
             if (string.IsNullOrEmpty(userId))
@@ -621,12 +717,6 @@ namespace WebApiMezada.Services.TaskGroup
         {
             if (task.FamilyGroupId != parent.FamilyGroupId)
                 throw new UnauthorizedAccessException("A tarefa não pertence ao grupo familiar do usuário.");
-        }
-
-        private async Task<TaskModel> GetTaskOrThrow(string taskId)
-        {
-            var task = await GetTaskById(taskId);
-            return task ?? throw new KeyNotFoundException("Tarefa não encontrada.");
         }
 
         private async void UpdateUserTask(UserModel user, string taskId)

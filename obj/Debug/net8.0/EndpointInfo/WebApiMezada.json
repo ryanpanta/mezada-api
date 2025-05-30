@@ -44,6 +44,45 @@
         }
       }
     },
+    "/api/FamilyGroups/{id}/info": {
+      "get": {
+        "tags": [
+          "FamilyGroup"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupInfoDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupInfoDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyGroupInfoDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/FamilyGroups/create": {
       "post": {
         "tags": [
@@ -106,6 +145,88 @@
         }
       }
     },
+    "/api/FamilyGroups/{id}/set-admin": {
+      "post": {
+        "tags": [
+          "FamilyGroup"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Suggestion": {
+      "get": {
+        "tags": [
+          "Suggestion"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Suggestion"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionCreateDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionCreateDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionCreateDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Tasks/stats/{familyGroupId}": {
       "get": {
         "tags": [
@@ -149,6 +270,45 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "Task"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdateDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdateDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdateDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Task"
@@ -170,6 +330,28 @@
         }
       }
     },
+    "/api/Tasks/filters/{familyGroupId}": {
+      "get": {
+        "tags": [
+          "Task"
+        ],
+        "parameters": [
+          {
+            "name": "familyGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Tasks": {
       "get": {
         "tags": [
@@ -177,15 +359,14 @@
         ],
         "parameters": [
           {
-            "name": "status",
+            "name": "filter",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             }
           },
           {
-            "name": "familyGroupId",
+            "name": "groupId",
             "in": "query",
             "schema": {
               "type": "string"
@@ -228,14 +409,45 @@
         }
       }
     },
-    "/api/Tasks/{id}/approve": {
-      "put": {
+    "/api/Tasks/account-points": {
+      "post": {
+        "tags": [
+          "Task"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPointsDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPointsDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPointsDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tasks/cycle-summary/{groupId}": {
+      "get": {
         "tags": [
           "Task"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "groupId",
             "in": "path",
             "required": true,
             "schema": {
@@ -250,14 +462,14 @@
         }
       }
     },
-    "/api/Tasks/{id}/reject": {
-      "put": {
+    "/api/Tasks/end-cycle/{groupId}": {
+      "post": {
         "tags": [
           "Task"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "groupId",
             "in": "path",
             "required": true,
             "schema": {
@@ -265,6 +477,59 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TaskHistory/{taskId}": {
+      "get": {
+        "tags": [
+          "TaskHistory"
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TaskHistory/revert": {
+      "post": {
+        "tags": [
+          "TaskHistory"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertHistoryDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertHistoryDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertHistoryDTO"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -496,10 +761,32 @@
   },
   "components": {
     "schemas": {
+      "AccountPointsDTO": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "nullable": true
+          },
+          "childId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnumCategory": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "EnumRoles": {
         "enum": [
-          1,
-          2
+          0,
+          1
         ],
         "type": "integer",
         "format": "int32"
@@ -509,6 +796,31 @@
         "properties": {
           "name": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FamilyGroupInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "hashCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserInfoDTO"
+            },
             "nullable": true
           }
         },
@@ -563,6 +875,30 @@
         },
         "additionalProperties": false
       },
+      "RevertHistoryDTO": {
+        "type": "object",
+        "properties": {
+          "historyId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SuggestionCreateDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "TaskCreateDTO": {
         "type": "object",
         "properties": {
@@ -574,9 +910,76 @@
             "type": "string",
             "nullable": true
           },
-          "points": {
+          "category": {
+            "$ref": "#/components/schemas/EnumCategory"
+          },
+          "defaultIncrement": {
             "type": "integer",
             "format": "int32"
+          },
+          "limitValue": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "childIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TaskUpdateDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/EnumCategory"
+          },
+          "defaultIncrement": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limitValue": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "childIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserInfoDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "$ref": "#/components/schemas/EnumRoles"
           }
         },
         "additionalProperties": false
@@ -660,6 +1063,19 @@
         },
         "additionalProperties": false
       }
+    },
+    "securitySchemes": {
+      "X-User-Id": {
+        "type": "apiKey",
+        "description": "Insira o ID do usuário no formato: 'X-User-Id: <user-id>'",
+        "name": "X-User-Id",
+        "in": "header"
+      }
     }
-  }
+  },
+  "security": [
+    {
+      "X-User-Id": [ ]
+    }
+  ]
 }

@@ -34,7 +34,11 @@ namespace WebApiMezada.Controllers
         {
             try
             {
-                var task = await _taskService.GetTaskById(id);
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+                
+                var task = await _taskService.GetTaskById(id, userId);
                 return Ok(task);
             }
             catch (Exception ex)
@@ -58,7 +62,7 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string filter, [FromQuery] string groupId)
+        public async Task<IActionResult> GetAll([FromQuery] string? filter, [FromQuery] string groupId)
         {
             try
             {
@@ -178,6 +182,24 @@ namespace WebApiMezada.Controllers
 
                 await _taskService.EndCycle(groupId, userId);
                 return Ok(new { Message = "Ciclo encerrado e novo ciclo iniciado com sucesso." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        
+        [HttpPost("remove-child")]
+        public async Task<IActionResult> RemoveChildFromTask([FromBody] RemoveChildFromTaskDTO dto)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                await _taskService.RemoveChildFromTask(dto, userId);
+                return Ok(new { Message = "Filho removido da tarefa com sucesso." });
             }
             catch (Exception ex)
             {

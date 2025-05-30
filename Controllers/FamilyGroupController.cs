@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using WebApiMezada.DTOs.FamilyGroup;
+using WebApiMezada.DTOs.Task;
 using WebApiMezada.DTOs.User;
 using WebApiMezada.Middleware.Attributes;
 using WebApiMezada.Models;
@@ -106,5 +107,23 @@ namespace WebApiMezada.Controllers
                 return BadRequest(new { Message = ex.Message });
             }
         }
+        [HttpGet("{id}/children")]
+        public async Task<ActionResult<List<ChildUserDTO>>> GetChildrenInGroup([FromRoute] string id)
+        {
+            try
+            {
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+
+                var children = await _familyGroupService.GetChildrenInGroup(id, userId);
+                return Ok(children);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        
     }
 }

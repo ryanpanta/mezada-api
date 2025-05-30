@@ -27,6 +27,53 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "GetGroupInfo",
+    "RelativePath": "api/FamilyGroups/{id}/info",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "WebApiMezada.DTOs.FamilyGroup.FamilyGroupInfoDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "SetAdmin",
+    "RelativePath": "api/FamilyGroups/{id}/set-admin",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "newParentId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
     "Method": "Create",
     "RelativePath": "api/FamilyGroups/create",
     "HttpMethod": "POST",
@@ -58,6 +105,64 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "WebApiMezada.Controllers.SuggestionController",
+    "Method": "GetAll",
+    "RelativePath": "api/Suggestion",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.SuggestionController",
+    "Method": "CreateOrUpdateSuggestion",
+    "RelativePath": "api/Suggestion",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "WebApiMezada.DTOs.Suggestion.SuggestionCreateDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskHistoryController",
+    "Method": "GetTaskHistory",
+    "RelativePath": "api/TaskHistory/{taskId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "taskId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskHistoryController",
+    "Method": "RevertHistory",
+    "RelativePath": "api/TaskHistory/revert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "WebApiMezada.DTOs.Task.RevertHistoryDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "WebApiMezada.Controllers.TaskController",
     "Method": "GetAll",
     "RelativePath": "api/Tasks",
@@ -66,12 +171,12 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "status",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "Name": "filter",
+        "Type": "System.String",
         "IsRequired": false
       },
       {
-        "Name": "familyGroupId",
+        "Name": "groupId",
         "Type": "System.String",
         "IsRequired": false
       }
@@ -112,6 +217,27 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.TaskController",
+    "Method": "Update",
+    "RelativePath": "api/Tasks/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "taskDTO",
+        "Type": "WebApiMezada.DTOs.Task.TaskUpdateDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskController",
     "Method": "Delete",
     "RelativePath": "api/Tasks/{id}",
     "HttpMethod": "DELETE",
@@ -128,14 +254,30 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.TaskController",
-    "Method": "SetAsApproved",
-    "RelativePath": "api/Tasks/{id}/approve",
-    "HttpMethod": "PUT",
+    "Method": "AccountPoints",
+    "RelativePath": "api/Tasks/account-points",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
+        "Name": "dto",
+        "Type": "WebApiMezada.DTOs.Task.AccountPointsDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskController",
+    "Method": "GetCycleSummary",
+    "RelativePath": "api/Tasks/cycle-summary/{groupId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupId",
         "Type": "System.String",
         "IsRequired": true
       }
@@ -144,14 +286,30 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.TaskController",
-    "Method": "SetAsRejected",
-    "RelativePath": "api/Tasks/{id}/reject",
-    "HttpMethod": "PUT",
+    "Method": "EndCycle",
+    "RelativePath": "api/Tasks/end-cycle/{groupId}",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
+        "Name": "groupId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskController",
+    "Method": "GetFilters",
+    "RelativePath": "api/Tasks/filters/{familyGroupId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "familyGroupId",
         "Type": "System.String",
         "IsRequired": true
       }

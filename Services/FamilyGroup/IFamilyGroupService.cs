@@ -1,4 +1,5 @@
 ﻿using WebApiMezada.DTOs.FamilyGroup;
+using WebApiMezada.DTOs.Task;
 using WebApiMezada.Models;
 
 namespace WebApiMezada.Services.FamilyGroup
@@ -11,5 +12,6 @@ namespace WebApiMezada.Services.FamilyGroup
         Task<FamilyGroupModel> GetFamilyGroupById(string id);
         Task<FamilyGroupModel> Update(FamilyGroupModel familyGroup);
         Task<string> SetAdmin(string groupId, string userIdToPromote, string currentUserId);
+        Task<List<ChildUserDTO>> GetChildrenInGroup(string groupId, string userId);
     }
 }

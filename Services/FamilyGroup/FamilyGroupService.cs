@@ -2,6 +2,7 @@
 using MongoDB.Driver;
 using WebApiMezada.Configurations;
 using WebApiMezada.DTOs.FamilyGroup;
+using WebApiMezada.DTOs.Task;
 using WebApiMezada.Models;
 using WebApiMezada.Models.Enums;
 using WebApiMezada.Services.User;
@@ -140,6 +141,28 @@ namespace WebApiMezada.Services.FamilyGroup
             await _userService.Update(userToPromote);
 
             return "Usuário promovido a administrador com sucesso!";
+        }
+        
+        public async Task<List<ChildUserDTO>> GetChildrenInGroup(string groupId, string userId)
+        {
+            var user = await GetUserOrThrow(userId);
+            if (user.Role != EnumRoles.Parent)
+                throw new UnauthorizedAccessException("Apenas pais podem visualizar os filhos do grupo.");
+
+            var familyGroup = await _familyGroupCollection.Find(fg => fg.Id == groupId && fg.Active).FirstOrDefaultAsync();
+            if (familyGroup == null)
+                throw new KeyNotFoundException("Grupo não encontrado.");
+
+            var children = await _userCollection
+                .Find(u => familyGroup.Users.Contains(u.Id) && u.Role == EnumRoles.Child && u.Active)
+                .Project(u => new ChildUserDTO
+                {
+                    Id = u.Id,
+                    Name = u.Name
+                })
+                .ToListAsync();
+
+            return children;
         }
 
         private string GenerateHashCode()

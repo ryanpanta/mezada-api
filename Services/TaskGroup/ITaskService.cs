@@ -7,7 +7,7 @@ namespace WebApiMezada.Services.TaskGroup
     public interface ITaskService
     {
         Task<TaskStatsDTO> GetTaskStats(string familyGroupId);
-        Task<TaskModel> GetTaskById(string id);
+        Task<object> GetTaskById(string id, string userId);
         Task<List<TaskListDTO>> GetAll(string filter, string groupId, string userId);
         Task<List<FilterOptionDTO>> GetFilters(string groupId);
         Task<TaskModel> Create(TaskCreateDTO taskDTO, string userId);
@@ -18,5 +18,6 @@ namespace WebApiMezada.Services.TaskGroup
         Task RevertHistory(RevertHistoryDTO dto, string userId);
         Task EndCycle(string groupId, string userId);
         Task<CycleSummaryDTO> GetCycleSummary(string groupId, string userId);
+        Task RemoveChildFromTask(RemoveChildFromTaskDTO dto, string userId);
     }
 }
