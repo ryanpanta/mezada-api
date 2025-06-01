@@ -10,7 +10,7 @@ namespace WebApiMezada.Services.TaskGroup
         Task<object> GetTaskById(string id, string userId);
         Task<List<TaskListDTO>> GetAll(string filter, string groupId, string userId);
         Task<List<FilterOptionDTO>> GetFilters(string groupId);
-        Task<TaskModel> Create(TaskCreateDTO taskDTO, string userId);
+        Task<TaskModel> CreateOrUpdate(TaskCreateDTO taskDTO, string userId);
         Task<TaskModel> Update(TaskUpdateDTO taskDTO, string userId);
         Task AccountPoints(AccountPointsDTO dto, string userId);
         Task Delete(string taskId, string userId);

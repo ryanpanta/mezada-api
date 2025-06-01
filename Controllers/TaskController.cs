@@ -80,7 +80,7 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] TaskCreateDTO taskDTO)
+        public async Task<IActionResult> CreateOrUpdate([FromBody] TaskCreateDTO taskDTO)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace WebApiMezada.Controllers
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized(new { Message = "Usuário não autenticado." });
 
-                var task = await _taskService.Create(taskDTO, userId);
+                var task = await _taskService.CreateOrUpdate(taskDTO, userId);
                 return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, task);
             }
           

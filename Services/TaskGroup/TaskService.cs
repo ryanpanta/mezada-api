@@ -239,7 +239,7 @@ namespace WebApiMezada.Services.TaskGroup
             return filters;
         }
 
-        public async Task<TaskModel> Create(TaskCreateDTO taskDTO, string userId)
+        public async Task<TaskModel> CreateOrUpdate(TaskCreateDTO taskDTO, string userId)
         {
             ValidateUserId(userId);
             var validationResult = _validator.Validate(taskDTO);
@@ -258,43 +258,87 @@ namespace WebApiMezada.Services.TaskGroup
             if (activeCycle == null)
                 throw new InvalidOperationException("Nenhum ciclo ativo encontrado para o grupo.");
 
-            var initialValue = taskDTO.Category == EnumCategory.Reward ? 0 : taskDTO.DefaultIncrement;
+            TaskModel task;
+            bool isUpdate = !string.IsNullOrEmpty(taskDTO.Id);
 
-            var task = new TaskModel
+            if (isUpdate)
             {
-                CycleId = activeCycle.Id,
-                UserId = userId,
-                FamilyGroupId = user.FamilyGroupId,
-                Title = taskDTO.Title,
-                Description = taskDTO.Description,
-                Category = taskDTO.Category,
-                InitialValue = initialValue,
-                DefaultIncrement = taskDTO.Category == EnumCategory.Reward
-                    ? Math.Abs(taskDTO.DefaultIncrement)
-                    : -Math.Abs(taskDTO.DefaultIncrement),
-                LimitValue = taskDTO.Category == EnumCategory.Reward ? taskDTO.LimitValue : 0
-            };
+                // Atualização
+                task = await _taskCollection.Find(t => t.Id == taskDTO.Id && t.Active).FirstOrDefaultAsync();
+                if (task == null)
+                    throw new KeyNotFoundException("Tarefa não encontrada.");
 
-            await _taskCollection.InsertOneAsync(task);
+                task.Title = taskDTO.Title;
+                task.Description = taskDTO.Description;
+                task.Category = taskDTO.Category;
+                task.DefaultIncrement = taskDTO.DefaultIncrement;
+                task.LimitValue = taskDTO.Category == EnumCategory.Reward ? taskDTO.LimitValue : 0;
 
-            foreach (var childId in taskDTO.ChildIds)
+                await _taskCollection.ReplaceOneAsync(t => t.Id == task.Id, task);
+            }
+            else
+            {
+                task = new TaskModel
+                {
+                    CycleId = activeCycle.Id,
+                    UserId = userId,
+                    FamilyGroupId = user.FamilyGroupId,
+                    Title = taskDTO.Title,
+                    Description = taskDTO.Description,
+                    Category = taskDTO.Category,
+                    InitialValue = taskDTO.InitialValue,
+                    DefaultIncrement = taskDTO.DefaultIncrement,
+                    LimitValue = taskDTO.Category == EnumCategory.Reward ? taskDTO.LimitValue : 0
+                };
+
+                await _taskCollection.InsertOneAsync(task);
+            }
+
+            if (isUpdate)
+            {
+                await _taskAssignmentCollection.UpdateManyAsync(
+                    ta => ta.TaskId == task.Id && !ta.IsDeleted,
+                    Builders<TaskAssignmentModel>.Update.Set(ta => ta.IsDeleted, true)
+                );
+            }
+
+            foreach (var childAssignment in taskDTO.Children)
             {
                 var child = await _userCollection
-                    .Find(u => u.Id == childId && u.FamilyGroupId == user.FamilyGroupId && u.Role == EnumRoles.Child)
+                    .Find(u => u.Id == childAssignment.ChildId && u.FamilyGroupId == user.FamilyGroupId &&
+                               u.Role == EnumRoles.Child)
                     .FirstOrDefaultAsync();
                 if (child == null)
                     continue;
 
-                var assignment = new TaskAssignmentModel
+                var existingAssignment = await _taskAssignmentCollection
+                    .Find(ta => ta.TaskId == task.Id && ta.ChildId == childAssignment.ChildId)
+                    .FirstOrDefaultAsync();
+
+                if (existingAssignment != null)
                 {
-                    TaskId = task.Id,
-                    ChildId = childId,
-                    CustomIncrement = task.DefaultIncrement,
-                    CurrentBalance = 0,
-                    BonusBalance = 0,
-                    IsDeleted = false
-                };
-                await _taskAssignmentCollection.InsertOneAsync(assignment);
+                    // Restaurar a atribuição (caso tenha sido marcada como deletada) e atualizar o CustomIncrement
+                    await _taskAssignmentCollection.UpdateOneAsync(
+                        ta => ta.Id == existingAssignment.Id,
+                        Builders<TaskAssignmentModel>.Update
+                            .Set(ta => ta.IsDeleted, false)
+                            .Set(ta => ta.CustomIncrement, childAssignment.CustomIncrement)
+                    );
+                }
+                else
+                {
+                    // Criar nova atribuição
+                    var assignment = new TaskAssignmentModel
+                    {
+                        TaskId = task.Id,
+                        ChildId = childAssignment.ChildId,
+                        CustomIncrement = childAssignment.CustomIncrement,
+                        CurrentBalance = task.Category == EnumCategory.Penalty ? task.InitialValue : 0,
+                        BonusBalance = 0,
+                        IsDeleted = false
+                    };
+                    await _taskAssignmentCollection.InsertOneAsync(assignment);
+                }
             }
 
             return task;
@@ -398,31 +442,37 @@ namespace WebApiMezada.Services.TaskGroup
             if (assignment == null)
                 throw new KeyNotFoundException("Atribuição não encontrada para o filho.");
 
-            var newBalance = assignment.CurrentBalance + assignment.CustomIncrement;
-            var limitValue = task.LimitValue;
-
-            int updatedBalance, bonusBalance;
             if (task.Category == EnumCategory.Reward)
             {
-                updatedBalance = Math.Min(newBalance, limitValue);
-                bonusBalance = Math.Max(0, newBalance - limitValue);
+                // Para recompensas, incrementa o CustomIncrement no CurrentBalance
+                assignment.CurrentBalance += assignment.CustomIncrement;
+                if (assignment.CurrentBalance > task.LimitValue && task.LimitValue > 0)
+                {
+                    var excess = assignment.CurrentBalance - task.LimitValue;
+                    assignment.CurrentBalance = task.LimitValue;
+                    assignment.BonusBalance += excess;
+                }
             }
-            else
+            else if (task.Category == EnumCategory.Penalty)
             {
-                updatedBalance = Math.Max(newBalance, limitValue);
-                bonusBalance = Math.Min(0, newBalance);
+                // Para penalidades, decrementa o CustomIncrement do InitialValue
+                var newBalance = task.InitialValue - assignment.CustomIncrement;
+                if (newBalance < 0)
+                {
+                    assignment.BonusBalance += newBalance; // Saldo negativo vai para BonusBalance
+                    assignment.CurrentBalance = 0;
+                }
+                else
+                {
+                    assignment.CurrentBalance = newBalance;
+                }
             }
 
-            await _taskAssignmentCollection.UpdateOneAsync(
-                ta => ta.Id == assignment.Id,
-                Builders<TaskAssignmentModel>.Update
-                    .Set(ta => ta.CurrentBalance, updatedBalance)
-                    .Set(ta => ta.BonusBalance, bonusBalance)
-            );
+            await _taskAssignmentCollection.ReplaceOneAsync(ta => ta.Id == assignment.Id, assignment);
 
             var history = new TaskHistoryModel
             {
-                TaskId = task.Id,
+                TaskId = dto.TaskId,
                 AssignmentId = assignment.Id,
                 AccountedBy = userId,
                 ChildId = dto.ChildId,
