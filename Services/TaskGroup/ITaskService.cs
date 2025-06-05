@@ -6,7 +6,7 @@ namespace WebApiMezada.Services.TaskGroup
 {
     public interface ITaskService
     {
-        Task<TaskStatsDTO> GetTaskStats(string familyGroupId);
+        Task<TaskStatsDTO> GetTaskStats(string familyGroupId, string userId);
         Task<object> GetTaskById(string id, string userId);
         Task<List<TaskListDTO>> GetAll(string filter, string groupId, string userId);
         Task<List<FilterOptionDTO>> GetFilters(string groupId);

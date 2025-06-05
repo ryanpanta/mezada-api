@@ -49,20 +49,59 @@ namespace WebApiMezada.Services.TaskGroup
             _updateValidator = updateValidator;
         }
 
-        public async Task<TaskStatsDTO> GetTaskStats(string familyGroupId)
+        public async Task<TaskStatsDTO> GetTaskStats(string familyGroupId, string userId)
         {
-            var tasks = await _taskCollection.Find(t => t.Active == true && t.FamilyGroupId == familyGroupId)
-                .ToListAsync();
-            var total = tasks.Count;
-            var rewards = tasks.Count(t => t.Category == EnumCategory.Reward);
-            var penalties = tasks.Count(t => t.Category == EnumCategory.Penalty);
+            var user = await GetUserOrThrow(userId);
+            if (user.FamilyGroupId != familyGroupId)
+                throw new UnauthorizedAccessException("Usuário não pertence a este grupo.");
 
-            return new TaskStatsDTO
+            TaskStatsDTO stats;
+
+            if (user.Role == EnumRoles.Parent)
             {
-                Total = total,
-                Rewards = rewards,
-                Penalties = penalties
-            };
+                var tasks = await _taskCollection
+                    .Find(t => t.Active == true && t.FamilyGroupId == familyGroupId)
+                    .ToListAsync();
+
+                var total = tasks.Count;
+                var rewards = tasks.Count(t => t.Category == EnumCategory.Reward);
+                var penalties = tasks.Count(t => t.Category == EnumCategory.Penalty);
+
+                stats = new TaskStatsDTO
+                {
+                    Total = total,
+                    Rewards = rewards,
+                    Penalties = penalties
+                };
+            }
+            else if (user.Role == EnumRoles.Child)
+            {
+                var assignments = await _taskAssignmentCollection
+                    .Find(ta => ta.ChildId == userId && !ta.IsDeleted)
+                    .ToListAsync();
+
+                var taskIds = assignments.Select(ta => ta.TaskId).ToList();
+                var tasks = await _taskCollection
+                    .Find(t => t.Active == true && t.FamilyGroupId == familyGroupId && taskIds.Contains(t.Id))
+                    .ToListAsync();
+
+                var total = tasks.Count;
+                var rewards = tasks.Count(t => t.Category == EnumCategory.Reward);
+                var penalties = tasks.Count(t => t.Category == EnumCategory.Penalty);
+
+                stats = new TaskStatsDTO
+                {
+                    Total = total,
+                    Rewards = rewards,
+                    Penalties = penalties
+                };
+            }
+            else
+            {
+                throw new InvalidOperationException("Papel do usuário não reconhecido.");
+            }
+
+            return stats;
         }
 
         public async Task<object> GetTaskById(string id, string userId)
@@ -455,8 +494,7 @@ namespace WebApiMezada.Services.TaskGroup
             }
             else if (task.Category == EnumCategory.Penalty)
             {
-                // Para penalidades, decrementa o CustomIncrement do InitialValue
-                var newBalance = task.InitialValue - assignment.CustomIncrement;
+                var newBalance = assignment.CurrentBalance - assignment.CustomIncrement;
                 if (newBalance < 0)
                 {
                     assignment.BonusBalance += newBalance; // Saldo negativo vai para BonusBalance
@@ -562,31 +600,41 @@ namespace WebApiMezada.Services.TaskGroup
             if (assignment == null)
                 throw new KeyNotFoundException("Atribuição não encontrada.");
 
-            // Reverter o valor contabilizado
-            var revertValue = -history.Value; // Inverte o sinal do valor original
-            var newBalance = assignment.CurrentBalance + revertValue;
-            var limitValue =
-                (await _taskCollection.Find(t => t.Id == history.TaskId).FirstOrDefaultAsync())?.LimitValue ?? 0;
+            var task = await _taskCollection.Find(t => t.Id == history.TaskId).FirstOrDefaultAsync();
+            if (task == null)
+                throw new KeyNotFoundException("Tarefa não encontrada.");
 
-            int updatedBalance, bonusBalance;
-            if ((await _taskCollection.Find(t => t.Id == history.TaskId).FirstOrDefaultAsync())?.Category ==
-                EnumCategory.Reward)
-            {
-                updatedBalance = Math.Min(Math.Max(newBalance, 0), limitValue);
-                bonusBalance = Math.Max(0, newBalance - limitValue);
-            }
-            else
-            {
-                updatedBalance = Math.Max(Math.Min(newBalance, 0), limitValue);
-                bonusBalance = Math.Min(0, newBalance);
-            }
+            var limitValue = task.LimitValue;
+            var newBalance = assignment.CurrentBalance;
 
-            await _taskAssignmentCollection.UpdateOneAsync(
-                ta => ta.Id == assignment.Id,
-                Builders<TaskAssignmentModel>.Update
-                    .Set(ta => ta.CurrentBalance, updatedBalance)
-                    .Set(ta => ta.BonusBalance, bonusBalance)
-            );
+            // Reverter com base na categoria da tarefa
+            if (task.Category == EnumCategory.Reward)
+            {
+                // Para recompensas, subtrai o valor do histórico do CurrentBalance
+                newBalance -= history.Value;
+                var updatedBalance = Math.Min(Math.Max(newBalance, 0), limitValue); // Limita entre 0 e LimitValue
+                var bonusBalance =
+                    Math.Max(0, newBalance - limitValue); // Ajusta o BonusBalance para valores excedentes
+                await _taskAssignmentCollection.UpdateOneAsync(
+                    ta => ta.Id == assignment.Id,
+                    Builders<TaskAssignmentModel>.Update
+                        .Set(ta => ta.CurrentBalance, updatedBalance)
+                        .Set(ta => ta.BonusBalance, bonusBalance)
+                );
+            }
+            else if (task.Category == EnumCategory.Penalty)
+            {
+                // Para penalidades, soma o valor do histórico ao CurrentBalance (reverte a subtração)
+                newBalance += history.Value;
+                var updatedBalance = Math.Max(newBalance, 0); // Limita o mínimo a 0 (ou outro valor se necessário)
+                var bonusBalance = Math.Min(0, newBalance); // Ajusta o BonusBalance para valores negativos
+                await _taskAssignmentCollection.UpdateOneAsync(
+                    ta => ta.Id == assignment.Id,
+                    Builders<TaskAssignmentModel>.Update
+                        .Set(ta => ta.CurrentBalance, updatedBalance)
+                        .Set(ta => ta.BonusBalance, bonusBalance)
+                );
+            }
 
             // Marcar o histórico como revertido
             await _taskHistoryCollection.UpdateOneAsync(
@@ -611,9 +659,18 @@ namespace WebApiMezada.Services.TaskGroup
                 .Find(t => t.FamilyGroupId == groupId && t.CycleId == activeCycle.Id && t.Active)
                 .ToListAsync();
 
+            var taskIds = tasks.Select(t => t.Id).ToList();
             var assignments = await _taskAssignmentCollection
-                .Find(Builders<TaskAssignmentModel>.Filter.In(ta => ta.TaskId, tasks.Select(t => t.Id)) &
-                      Builders<TaskAssignmentModel>.Filter.Eq(ta => ta.IsDeleted, false))
+                .Find(ta => taskIds.Contains(ta.TaskId) && !ta.IsDeleted)
+                .ToListAsync();
+
+            var taskHistories = await _taskHistoryCollection
+                .Find(h => taskIds.Contains(h.TaskId) && !h.IsDeleted && !h.IsReverted)
+                .ToListAsync();
+
+            var childrenIds = assignments.Select(ta => ta.ChildId).Distinct().ToList();
+            var children = await _userCollection
+                .Find(u => childrenIds.Contains(u.Id))
                 .ToListAsync();
 
             var summary = new CycleSummaryDTO
@@ -622,28 +679,72 @@ namespace WebApiMezada.Services.TaskGroup
                 CycleId = activeCycle.Id,
                 TotalPositiveBalance = 0,
                 TotalNegativeBalance = 0,
-                TaskBalances = new List<TaskBalanceDTO>()
+                ChildrenSummaries = new List<ChildCycleSummaryDTO>()
             };
 
-            foreach (var task in tasks)
+            // Calcular o resumo por filho
+            foreach (var childId in childrenIds)
             {
-                var taskAssignments = assignments.Where(ta => ta.TaskId == task.Id).ToList();
-                foreach (var assignment in taskAssignments)
-                {
-                    var balance = assignment.CurrentBalance + assignment.BonusBalance;
-                    if (balance > 0)
-                        summary.TotalPositiveBalance += balance;
-                    else
-                        summary.TotalNegativeBalance += balance;
+                var child = children.FirstOrDefault(c => c.Id == childId);
+                if (child == null) continue;
 
-                    summary.TaskBalances.Add(new TaskBalanceDTO
+                var childAssignments = assignments.Where(ta => ta.ChildId == childId).ToList();
+                var childHistories =
+                    taskHistories.Where(h => h.ChildId == childId).OrderBy(h => h.CreatedAt).ToList();
+
+                int currentBalanceTotal = 0, bonusBalanceTotal = 0, rewardBalance = 0, penaltyBalance = 0;
+
+                // Calcular saldos por categoria usando apenas CurrentBalance
+                foreach (var assignment in childAssignments)
+                {
+                    var task = tasks.First(t => t.Id == assignment.TaskId);
+                    var currentBalance = assignment.CurrentBalance; // Apenas o saldo atual
+                    var bonusBalance = assignment.BonusBalance; // Bônus separado
+
+                    if (task.Category == EnumCategory.Reward)
                     {
-                        TaskId = task.Id,
-                        Title = task.Title,
-                        CurrentBalance = assignment.CurrentBalance,
-                        BonusBalance = assignment.BonusBalance
+                        rewardBalance += currentBalance;
+                    }
+                    else if (task.Category == EnumCategory.Penalty)
+                    {
+                        penaltyBalance += currentBalance;
+                    }
+
+                    currentBalanceTotal += currentBalance;
+                    bonusBalanceTotal += bonusBalance;
+                }
+
+                var totalBalance = currentBalanceTotal; // Somente o saldo atual como sugestão de mesada
+                if (totalBalance > 0)
+                    summary.TotalPositiveBalance += totalBalance;
+                else
+                    summary.TotalNegativeBalance += totalBalance;
+
+                // Calcular histórico de saldo
+                var balanceHistory = new List<BalanceHistoryDTO>();
+                int cumulativeBalance = 0;
+                foreach (var history in childHistories)
+                {
+                    var task = tasks.First(t => t.Id == history.TaskId);
+                    var value = task.Category == EnumCategory.Reward ? history.Value : -history.Value;
+                    cumulativeBalance += value;
+                    balanceHistory.Add(new BalanceHistoryDTO
+                    {
+                        Date = history.CreatedAt,
+                        Balance = cumulativeBalance
                     });
                 }
+
+                summary.ChildrenSummaries.Add(new ChildCycleSummaryDTO
+                {
+                    ChildId = childId,
+                    ChildName = child.Name,
+                    TotalBalance = totalBalance, // Apenas CurrentBalance como mesada sugerida
+                    TotalBonus = bonusBalanceTotal, // Bônus total separado
+                    RewardBalance = rewardBalance, // Apenas CurrentBalance de recompensas
+                    PenaltyBalance = penaltyBalance, // Apenas CurrentBalance de penalidades
+                    BalanceHistory = balanceHistory
+                });
             }
 
             return summary;

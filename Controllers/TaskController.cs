@@ -20,7 +20,11 @@ namespace WebApiMezada.Controllers
         {
             try
             {
-                var stats = await _taskService.GetTaskStats(familyGroupId);
+                var userId = Request.Headers["X-User-Id"].ToString();
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { Message = "Usuário não autenticado." });
+                
+                var stats = await _taskService.GetTaskStats(familyGroupId, userId);
                 return Ok(stats);
             }
             catch (Exception ex)

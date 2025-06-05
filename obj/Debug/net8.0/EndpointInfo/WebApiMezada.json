@@ -186,6 +186,54 @@
         }
       }
     },
+    "/api/FamilyGroups/{id}/children": {
+      "get": {
+        "tags": [
+          "FamilyGroup"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildUserDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildUserDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildUserDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Suggestion": {
       "get": {
         "tags": [
@@ -484,6 +532,37 @@
         }
       }
     },
+    "/api/Tasks/remove-child": {
+      "post": {
+        "tags": [
+          "Task"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveChildFromTaskDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveChildFromTaskDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveChildFromTaskDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/TaskHistory/{taskId}": {
       "get": {
         "tags": [
@@ -775,6 +854,34 @@
         },
         "additionalProperties": false
       },
+      "ChildAssignmentDTO": {
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customIncrement": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChildUserDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "EnumCategory": {
         "enum": [
           0,
@@ -875,6 +982,20 @@
         },
         "additionalProperties": false
       },
+      "RemoveChildFromTaskDTO": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "nullable": true
+          },
+          "childId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RevertHistoryDTO": {
         "type": "object",
         "properties": {
@@ -902,6 +1023,10 @@
       "TaskCreateDTO": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
           "title": {
             "type": "string",
             "nullable": true
@@ -921,10 +1046,14 @@
             "type": "integer",
             "format": "int32"
           },
-          "childIds": {
+          "initialValue": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "children": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ChildAssignmentDTO"
             },
             "nullable": true
           }

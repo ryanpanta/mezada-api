@@ -27,6 +27,32 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
+    "Method": "GetChildrenInGroup",
+    "RelativePath": "api/FamilyGroups/{id}/children",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[WebApiMezada.DTOs.Task.ChildUserDTO, WebApiMezada, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.FamilyGroupController",
     "Method": "GetGroupInfo",
     "RelativePath": "api/FamilyGroups/{id}/info",
     "HttpMethod": "GET",
@@ -185,7 +211,7 @@
   },
   {
     "ContainingType": "WebApiMezada.Controllers.TaskController",
-    "Method": "Create",
+    "Method": "CreateOrUpdate",
     "RelativePath": "api/Tasks",
     "HttpMethod": "POST",
     "IsController": true,
@@ -311,6 +337,22 @@
       {
         "Name": "familyGroupId",
         "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApiMezada.Controllers.TaskController",
+    "Method": "RemoveChildFromTask",
+    "RelativePath": "api/Tasks/remove-child",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "WebApiMezada.DTOs.Task.RemoveChildFromTaskDTO",
         "IsRequired": true
       }
     ],
