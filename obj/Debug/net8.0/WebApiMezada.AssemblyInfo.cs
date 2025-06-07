@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WebApiMezada")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e902601857674c97aee76a63786aa623fe59d04f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+614f5cf6d1982ae6f4443632f93a3b40ea188255")]
 [assembly: System.Reflection.AssemblyProductAttribute("WebApiMezada")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WebApiMezada")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

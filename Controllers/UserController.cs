@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebApiMezada.DTOs.User;
 using WebApiMezada.Middleware.Attributes;
 using WebApiMezada.Models;
+using WebApiMezada.Services.FamilyGroup;
 using WebApiMezada.Services.User;
 
 namespace WebApiMezada.Controllers
@@ -12,9 +13,11 @@ namespace WebApiMezada.Controllers
     public class UserController : Controller
     {
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private readonly IFamilyGroupService _familyGroupService;
+        public UserController(IUserService userService, IFamilyGroupService familyGroupService)
         {
             _userService = userService;
+            _familyGroupService = familyGroupService;
         }
 
         [HttpGet]
@@ -98,7 +101,6 @@ namespace WebApiMezada.Controllers
         }
 
         [HttpGet("me")]
-        //[RequireAuthentication]
         public async Task<IActionResult> GetCurrentUser()
         {
             try
@@ -111,13 +113,21 @@ namespace WebApiMezada.Controllers
                 if (user == null)
                     return NotFound(new { Message = "Usuário não encontrado." });
 
+                string familyGroupName = string.Empty;
+                if (!string.IsNullOrEmpty(user.FamilyGroupId))
+                {
+                    var familyGroup = await _familyGroupService.GetFamilyGroupById(user.FamilyGroupId);
+                    familyGroupName = familyGroup?.Name ?? string.Empty;
+                }
+
                 return Ok(new
                 {
                     UserId = user.Id,
                     Name = user.Name,
                     Email = user.Email,
                     Role = user.Role,
-                    FamilyGroupId = user.FamilyGroupId
+                    FamilyGroupId = user.FamilyGroupId,
+                    FamilyGroupName = familyGroupName
                 });
             }
             catch (Exception ex)
